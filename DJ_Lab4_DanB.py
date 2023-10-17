@@ -21,14 +21,16 @@ def main():
    crx10_dj.shunk_gripper('open')
    crx10_dj.write_joint_pose(home)
    crx10_dj.start_robot()
+   # print(f'{moving}')
 
    crx10_dj.write_joint_pose(grab)
    crx10_dj.start_robot()
+   # print(f'{moving}')
    crx10_dj.shunk_gripper('close')
 
    # crx10_dj.write_joint_pose(handoff1)
    # crx10_dj.send_coords(364.646, 690.701, 376.777, -90.995, -31.562, -1.412)
-   crx10_dj.send_coords(364.646, 690.701, 476.777, -90.995, -31.562, -1.412)
+   crx10_dj.write_cartesian_position(364.646, 690.701, 476.777, -90.995, -31.562, -1.412)
 
    crx10_dj.start_robot()
    
