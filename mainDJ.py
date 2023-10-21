@@ -101,6 +101,7 @@ def main():
    message = json.dumps(flag_data)
    client.publish("flag_data", message, qos=1)
    print("end of prog")
+   client.loop_end()
    
 
    # while(1):
