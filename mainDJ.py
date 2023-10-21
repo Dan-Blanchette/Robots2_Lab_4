@@ -12,11 +12,20 @@ BROKER_PORT = 1883
 
 drive_path = '129.101.98.215' # DJ
 
+def_cart_data = {
+    "x": 364.646,
+    "y": 690.701,
+    "z": 376.777,
+    "w":-90.995,
+    "p":-31.562,
+ 	 "r":-1.412
+}
+
 cart_data = {
-    "x": 1.23,
-    "y": 4.56,
-    "z": 7.89
-} 
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+}
 
 flag_data = {
     "dj_waiting": False,
@@ -25,9 +34,26 @@ flag_data = {
     "bill_has_die": False
 }
 
+# rpbot API class instance
+crx10_dj = robot(drive_path)
+
 def on_publish(client, userdata, mid):
     print("Message Published...")
+    
+# def randCart():
+#    cart_offset["x_os"] = random.uniform(-50.0, 50.0)
+#    print(f'x_off: {cart_offset["x_os"]}')
+#    cart_offset["y_os"] = random.uniform(-50.0, 50.0)
+#    print(f'y_off: {cart_offset["y_os"]}')
+#    cart_offset["z_os"] = random.uniform(-90.0, 90.0)
+#    print(f'z_off: {cart_offset["z_os"]}')
+#    message2 = json.dumps(cart_offset)
+#    client.publish("cart_offset", message2, qos=1)
 
+#    crx10_dj.write_cartesian_position(def_cart_data["x"],def_cart_data["y"],def_cart_data["z"],
+#                                      def_cart_data["w"],def_cart_data["p"],def_cart_data["r"])
+#    crx10_dj.start_robot()
+   
 
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
@@ -67,8 +93,7 @@ def main():
 
 # main program 
 
-   crx10_dj = robot(drive_path)
-   # joint moves
+
    home = [3.6055996417999268,-1.5429623126983643,3.3683128356933594,-0.713886559009552,-4.529087066650391,-2.439002752304077]
    def_loc_grab = [13.7835693359375,23.362775802612305,-52.080665588378906,-1.1174789667129517,-39.579307556152344,16.08687400817871] 
    # cartesian moves
@@ -89,25 +114,58 @@ def main():
    flag_data["dj_has_die"] = True
    message = json.dumps(flag_data)
    client.publish("flag_data", message, qos=1)
+   print(f'I just sent Gary This Value:{message}')
    
+
 
    # crx10_dj.write_joint_pose(handoff)
-   crx10_dj.write_cartesian_position(364.646, 690.701, 476.777, -90.995, -31.562, -1.412)
+   # crx10_dj.write_cartesian_position(default_cart_data["x"], default_cart_data["y"], default_cart_data["z"], 
+   #                                   default_cart_data["w"], default_cart_data["p"], default_cart_data["r"])
+
+   cart_data["x"] = random.uniform(-50.0, 50.0)
+   print(f'x_off: {cart_data["x"]}')
+   cart_data["y"] = random.uniform(-50.0, 50.0)
+   print(f'y_off: {cart_data["y"]}')
+   cart_data["z"] = random.uniform(-90.0, 90.0)
+   print(f'z_off: {cart_data["z"]}')
+   message2 = json.dumps(cart_data)
+   client.publish("cart_offset", message2, qos=2)
+   
+   print(f'I just sent Gary {message2}')
+
+   crx10_dj.write_cartesian_position(def_cart_data["x"],def_cart_data["y"],def_cart_data["z"],
+                                     def_cart_data["w"],def_cart_data["p"],def_cart_data["r"])
+   crx10_dj.start_robot()
+
+
    move_flag = crx10_dj.is_moving()
    crx10_dj.start_robot()
-   if (move_flag == 0):
-      flag_data["dj_waiting"] = True
-      print("I'm waiting..............................")
-   message = json.dumps(flag_data)
-   client.publish("flag_data", message, qos=1)
+   print(f'Flag Value: {move_flag}')
+   flag_data["dj_waiting"] = True
+   message1 = json.dumps(flag_data)
+   print("I'm waiting..............................")
+   client.publish("flag_data", message1, qos=1)
    print("end of prog")
-   client.loop_end()
    
+   while(1):
+      if(flag_data["bill_has_die"] == True):
+        crx10_dj.shunk_gripper("open")
+        flag_data['dj_has_die'] = False
+        message2 = json.dumps(flag_data)
+        client.publish("flag_data", message2, qos=1)
+        # -20mm y-axis retract
+        if(flag_data["dj_has_die"]== False):
+           print("Retracting.........")
+           crx10_dj.write_cartesian_position(364.646, 190.701, 376.777, -90.995, -31.562, -1.412)
+           crx10_dj.start_robot()
+        break
+      else:
+        # debug statements
+        print("waiting for Bill to grab")
+        print(f'Bill Status:{flag_data["bill_has_die"]}')
+        time.sleep(3)
 
-   # while(1):
-   #    client.publish("ROBOT_A_DJ", message, qos=1)
-   #    time.sleep(2)
-   #    client.loop_end()
+        
 
 
 
@@ -115,3 +173,4 @@ def main():
 if __name__=="__main__":
     main()  
 
+client.loop_stop()
