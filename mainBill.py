@@ -21,20 +21,17 @@ BROKER_IP = "129.101.98.194"
 BROKER_PORT = 1883
 
 cart_data = {
-    "x": 0,
-    "y": 0,
-    "z": 0,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
 }
 
 flag_data = {
     "dj_waiting": False,
-    "dj_moving": False,
     "dj_has_die": False,
     "bill_waiting": False,
-    "bill_moving": False,
     "bill_has_die": False
 }
-
 
 
 def on_publish(client, userdata, mid):
@@ -53,27 +50,20 @@ def on_disconnect(client, userdata, rc, properties=None):
 
 def on_message(client, userdata, msg):
     if msg.topic == "cart_data":
+        print("Message received")
         received_data = json.loads(msg.payload.decode())
-        cart_data['x'] = received_data.get('x', cart_data['x'])  # if first value DNE, grab second value
+        cart_data['x'] = received_data.get('x', cart_data['x'])
         cart_data['y'] = received_data.get('y', cart_data['y'])
-        cart_data['z'] = received_data.get('z', cart_data['z'])
+        cart_data['z'] = received_data.get('x', cart_data['z'])
+        print("From On-Message Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
+        print("From On-Message Received Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
+
     if msg.topic == "flag_data":
         received_data = json.loads(msg.payload.decode())
         flag_data['dj_waiting'] = received_data.get('dj_waiting', flag_data['dj_waiting'])
-        flag_data['dj_moving'] = received_data.get('dj_moving', flag_data['dj_moving'])
         flag_data['dj_has_die'] = received_data.get('dj_has_die', flag_data['dj_has_die'])
         flag_data['bill_waiting'] = received_data.get('bill_waiting', flag_data['bill_waiting'])
-        flag_data['bill_moving'] = received_data.get('bill_moving', flag_data['bill_moving'])
         flag_data['bill_has_die'] = received_data.get('bill_has_die', flag_data['bill_has_die'])
-
-
-
-
-    # x = data['x']
-    # y = data['y']
-    # z = data['z']
-    # robot_moving = data['robot_moving']
-    # print(f"x: {x}, y: {y}, z: {z}, robotMoving: {robot_moving}")
 
 
 client = mqtt.Client()
@@ -99,13 +89,15 @@ pose2 = [-9.638092994689941, -9.305192947387695, -11.088014602661133, -1.9604847
          -80.95472717285156]  # Approach Handoff
 pose3 = [-38.522300720214844, 6.566395282745361, -11.665398597717285, -1.7110475301742554, -79.27543640136719,
          -52.11516189575195]  # Handoff
+pose4 = [22.032983779907227, 30.85733985900879, -84.4652328491211, -21.550495147705078, 88.06071472167969,
+         -177.08120727539062]
 
-handoff = [384.062, -491.382, 431.861, -179.717, 1.903, -90.965]  # cartesian
+handoff = [390.062, -491.382, 431.861, -179.717, 1.903, -90.965]  # cartesian
 
 
 def main():
     """! Main program entry"""
-    print("Cartesian values x:",  cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
+    print("Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
 
     # Create new robot object
     crx10 = robot(drive_path)
@@ -114,64 +106,117 @@ def main():
     crx10.set_speed(200)
 
     # Open Gripper
-    crx10.onRobot_gripper_close(150, 20)
+    crx10.onRobot_gripper_close(120, 20)
 
-
-    print("Cartesian values x:",  cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
+    print("Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
 
     # Move arm lift die off belt
     crx10.set_pose(pose1)
     crx10.start_robot()
-    # while(crx10.is_moving()):
-    #     message = {
-    #         "bill_waiting": False,
-    #         "bill_moving": False,
-    #         "bill_has_die": False
-    #     }
-    #     client.publish("flag_data", json.dumps(message), qos=1)
-
-    temp_handoff = handoff
-    # check cart_datas
-    temp_handoff[0] += cart_data["x"]
-    temp_handoff[1] += cart_data["y"]
-    temp_handoff[2] += cart_data["z"]
 
     # Move arm to handoff approach
     crx10.set_pose(pose2)
     crx10.start_robot()
 
-
     # Goto approach handoff, wait for DJ
-    while(1):
-        if(flag_data["dj_waiting"] == True):
-            crx10.send_coords(temp_handoff[0], temp_handoff[1], temp_handoff[2], temp_handoff[3], temp_handoff[4], temp_handoff[5])
+    while (1):
+        if flag_data["dj_waiting"] == True:
+            print("Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
+
+            # copy handoff cartesian, apply new cart_data from DJ to it
+            temp_handoff = handoff
+            # check cart_datas
+            temp_handoff[0] += cart_data["x"]
+            temp_handoff[1] += cart_data["y"]
+            temp_handoff[2] += cart_data["z"]
+            crx10.send_coords(temp_handoff[0], temp_handoff[1], temp_handoff[2], temp_handoff[3], temp_handoff[4],
+                              temp_handoff[5])
             crx10.start_robot()
             break
         else:
             print("Waiting for DJ")
-            print("DJ flag data waiting:", flag_data["dj_waiting"], " moving:", flag_data["dj_moving"], " die:", flag_data["dj_has_die"])
+            print("DJ flag data waiting:", flag_data["dj_waiting"], " die:", flag_data["dj_has_die"])
             time.sleep(1)
 
-
     # #grasp die
-    crx10.onRobot_gripper_close(80,20)
-
-    #Tell DJ I have the die and I'm waiting for him
+    crx10.onRobot_gripper_close(70, 20)
+    # Wait for grasp
+    time.sleep(5)
+    # Tell DJ I have the die and I'm waiting for him
     flag_data['bill_has_die'] = True
     flag_data['bill_waiting'] = True
     message = json.dumps(flag_data)
     client.publish("flag_data", message, qos=1)
 
+    # Wait for dj to move
+    time.sleep(5)
+
     # Wait for DJ to release die
     # Goto approach handoff, wait for DJ
-    while(1):
-        if(flag_data["dj_has_die"] == False):
-            crx10.set_pose(pose1)
+    while (1):
+        if (flag_data["dj_has_die"] == False):
+            time.sleep(2)
+            crx10.set_pose(pose4)
             crx10.start_robot()
             break
         else:
             print("Waiting for DJ to release")
-            print("DJ flag data waiting:", flag_data["dj_waiting"], " moving:", flag_data["dj_moving"], " die:", flag_data["dj_has_die"])
+            print("DJ flag data waiting:", flag_data["dj_waiting"], " die:", flag_data["dj_has_die"])
+            time.sleep(.5)
+
+    # Open Gripper
+    crx10.onRobot_gripper_close(120, 20)
+
+    # go home
+    crx10.set_pose(pose1)
+    crx10.start_robot()
+
+    # Generate a random value between -50 and 50 for x and y, 100 for z
+    cart_data['x'] = random.uniform(-50.0, 50.0)
+    cart_data['y'] = random.uniform(-50.0, 50.0)
+    cart_data['z'] = random.uniform(-90.0, 90.0)
+
+    # Publish Random offset
+    cart_message = json.dumps(cart_data)
+    client.publish("cart_data", cart_message, qos=1)
+
+    # Reset temp_handoff
+    temp_handoff = handoff
+    # Apply random
+    temp_handoff[0] += cart_data['x']
+    temp_handoff[1] += cart_data['y']
+    temp_handoff[2] += cart_data['z']
+
+    # go to pickup die
+    crx10.set_pose(pose4)
+    crx10.start_robot()
+
+    # CloseGripper
+    crx10.onRobot_gripper_close(78, 20)
+
+    # go to pickup die
+    crx10.set_pose(pose2)
+    crx10.start_robot()
+
+    # Goto handoff position
+    crx10.send_coords(temp_handoff[0], temp_handoff[1], temp_handoff[2], temp_handoff[3], temp_handoff[4],
+                      temp_handoff[5])
+    crx10.start_robot()
+
+    flag_data['bill_has_die'] = True
+    flag_data['bill_waiting'] = True
+    message = json.dumps(flag_data)
+    client.publish("flag_data", message, qos=1)
+
+    # Wait for DJ to grasp, release
+    while (1):
+        if (flag_data["dj_has_die"] == True):
+            # OpenGripper
+            crx10.onRobot_gripper_close(120, 20)
+            break
+        else:
+            print("Waiting for DJ to grasp")
+            print("DJ flag data waiting:", flag_data["dj_waiting"], " die:", flag_data["dj_has_die"])
             time.sleep(.5)
 
 
