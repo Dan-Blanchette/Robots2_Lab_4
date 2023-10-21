@@ -22,9 +22,9 @@ def_cart_data = {
 }
 
 cart_data = {
-    "x": 0.0,
-    "y": 0.0,
-    "z": 0.0
+    "x": "0.0",
+    "y": "0.0",
+    "z": "0.0"
 }
 
 flag_data = {
@@ -91,19 +91,20 @@ client.loop_start()
 
 def main():
 
-# main program 
-
+# main program  
 
    home = [3.6055996417999268,-1.5429623126983643,3.3683128356933594,-0.713886559009552,-4.529087066650391,-2.439002752304077]
    def_loc_grab = [13.7835693359375,23.362775802612305,-52.080665588378906,-1.1174789667129517,-39.579307556152344,16.08687400817871] 
    # cartesian moves
    # move flag variable
    move_flag = crx10_dj.is_moving()
-
+   
+   # Start Robot Routine
+   # Open the Gripper
    crx10_dj.shunk_gripper('open')
+   # Go to the home position
    crx10_dj.write_joint_pose(home)
    crx10_dj.start_robot()
-   # print(f'{moving}')
 
 
    crx10_dj.write_joint_pose(def_loc_grab)
@@ -122,11 +123,11 @@ def main():
    # crx10_dj.write_cartesian_position(default_cart_data["x"], default_cart_data["y"], default_cart_data["z"], 
    #                                   default_cart_data["w"], default_cart_data["p"], default_cart_data["r"])
 
-   cart_data["x"] = random.uniform(-50.0, 50.0)
+   cart_data["x"] = str(random.uniform(-50.0, 50.0))
    print(f'x_off: {cart_data["x"]}')
-   cart_data["y"] = random.uniform(-50.0, 50.0)
+   cart_data["y"] = str(random.uniform(-50.0, 50.0))
    print(f'y_off: {cart_data["y"]}')
-   cart_data["z"] = random.uniform(-90.0, 90.0)
+   cart_data["z"] = str(random.uniform(-90.0, 90.0))
    print(f'z_off: {cart_data["z"]}')
    message2 = json.dumps(cart_data)
    client.publish("cart_offset", message2, qos=2)
