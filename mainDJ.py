@@ -134,8 +134,8 @@ def main():
    
    print(f'I just sent Gary {message2}')
 
-   crx10_dj.write_cartesian_position(def_cart_data["x"],def_cart_data["y"],def_cart_data["z"],
-                                     def_cart_data["w"],def_cart_data["p"],def_cart_data["r"])
+   crx10_dj.write_cartesian_position(def_cart_data["x"], def_cart_data["y"], def_cart_data["z"],
+                                     def_cart_data["w"], def_cart_data["p"], def_cart_data["r"])
    crx10_dj.start_robot()
 
 
