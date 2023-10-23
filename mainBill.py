@@ -51,12 +51,20 @@ def on_disconnect(client, userdata, rc, properties=None):
 def on_message(client, userdata, msg):
     if msg.topic == "cart_data":
         print("Message received")
+
+        # DEBUGGING
+        # print("Received payload:", msg.payload.decode())
+
+        # Decode the JSON
         received_data = json.loads(msg.payload.decode())
-        cart_data['x'] = received_data.get('x', cart_data['x'])
-        cart_data['y'] = received_data.get('y', cart_data['y'])
-        cart_data['z'] = received_data.get('x', cart_data['z'])
-        print("From On-Message Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
-        print("From On-Message Received Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
+
+        # Update cart Values
+        cart_data.update(received_data)
+
+        # DEBUGGING print types and values
+        print("FROM ON MESSAGE Cartesian values after Random x:", cart_data["x"], "(", type(cart_data["x"]), ")",
+              " y:", cart_data["y"], "(", type(cart_data["y"]), ")",
+              " z:", cart_data["z"], "(", type(cart_data["z"]), ")")
 
     if msg.topic == "flag_data":
         received_data = json.loads(msg.payload.decode())
@@ -219,6 +227,6 @@ def main():
             print("DJ flag data waiting:", flag_data["dj_waiting"], " die:", flag_data["dj_has_die"])
             time.sleep(.5)
 
-
+    client.loop_stop()
 if __name__ == "__main__":
     main()
