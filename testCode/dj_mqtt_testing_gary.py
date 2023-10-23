@@ -94,13 +94,12 @@ handoff = [390.062, -491.382, 431.861, -179.717, 1.903, -90.965]  # cartesian
 def main():
     """! Main program entry"""
 
-
     # Generate a random value between -50 and 50 for x and y, 100 for z
-    cart_data['x'] = random.uniform(-50.0, 50.0)
-    cart_data['y'] = random.uniform(-50.0, 50.0)
-    cart_data['z'] = random.uniform(-90.0, 90.0)
+    cart_data['x'] = round(random.uniform(-50.0, 50.0), 3)
+    cart_data['y'] = round(random.uniform(-50.0, 50.0), 3)
+    cart_data['z'] = round(random.uniform(-90.0, 90.0), 3)
 
-    time.sleep(10)
+    time.sleep(2)
 
 
     # Publish Random offset
@@ -109,7 +108,7 @@ def main():
     print("I JUST PUBLISHED CARTESIAN")
 
 
-    time.sleep(10)
+    time.sleep(2)
 
 
     time.sleep(15)

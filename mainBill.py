@@ -105,9 +105,11 @@ handoff = [390.062, -491.382, 431.861, -179.717, 1.903, -90.965]  # cartesian
 def main():
     """! Main program entry"""
 
-    client.loop_start()
-
+    #DEBUGGING
     print("Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
+
+    # MQTT stuff
+    client.loop_start()
 
     # Create new robot object
     crx10 = robot(drive_path)
@@ -117,8 +119,6 @@ def main():
 
     # Open Gripper
     crx10.onRobot_gripper_close(120, 20)
-
-    print("Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
 
     # Move arm lift die off belt
     crx10.set_pose(pose1)
@@ -131,7 +131,10 @@ def main():
     # Goto approach handoff, wait for DJ
     while (1):
         if flag_data["dj_waiting"] == True:
-            print("Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
+            # PRINT DEBUGGING WITH TYPE INFO
+            print("FROM ON MESSAGE Cartesian values after Random x:", cart_data["x"], "(", type(cart_data["x"]), ")",
+                  " y:", cart_data["y"], "(", type(cart_data["y"]), ")",
+                  " z:", cart_data["z"], "(", type(cart_data["z"]), ")")
 
             # copy handoff cartesian, apply new cart_data from DJ to it
             temp_handoff = handoff
@@ -139,6 +142,8 @@ def main():
             temp_handoff[0] += cart_data["x"]
             temp_handoff[1] += cart_data["y"]
             temp_handoff[2] += cart_data["z"]
+
+            # Move robot to handoff+random
             crx10.send_coords(temp_handoff[0], temp_handoff[1], temp_handoff[2], temp_handoff[3], temp_handoff[4],
                               temp_handoff[5])
             crx10.start_robot()
@@ -182,9 +187,9 @@ def main():
     crx10.start_robot()
 
     # Generate a random value between -50 and 50 for x and y, 100 for z
-    cart_data['x'] = random.uniform(-50.0, 50.0)
-    cart_data['y'] = random.uniform(-50.0, 50.0)
-    cart_data['z'] = random.uniform(-90.0, 90.0)
+    cart_data['x'] = round(random.uniform(-50.0, 50.0), 3)
+    cart_data['y'] = round(random.uniform(-50.0, 50.0), 3)
+    cart_data['z'] = round(random.uniform(-90.0, 90.0), 3)
 
     # Publish Random offset
     cart_message = json.dumps(cart_data)
