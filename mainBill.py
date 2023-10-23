@@ -8,10 +8,8 @@ import sys
 # sys.path.append('./pycomm3/pycomm3')
 import struct
 import random
-import time
 from robot_controller import robot
 import paho.mqtt.client as mqtt
-import sys
 import time
 import json
 import FANUCethernetipDriver
@@ -137,7 +135,8 @@ def main():
                   " z:", cart_data["z"], "(", type(cart_data["z"]), ")")
 
             # copy handoff cartesian, apply new cart_data from DJ to it
-            temp_handoff = handoff
+            temp_handoff = handoff.copy() # What the heck
+
             # check cart_datas
             temp_handoff[0] += cart_data["x"]
             temp_handoff[1] += cart_data["y"]
@@ -235,5 +234,6 @@ def main():
             time.sleep(.5)
 
     client.loop_stop()
+    client.disconnect()
 if __name__ == "__main__":
     main()
