@@ -80,7 +80,6 @@ client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.on_message = on_message
 client.connect(BROKER_IP, BROKER_PORT)
-client.loop_start()
 
 # This is just for testing MQTT
 # while (True):off
@@ -105,6 +104,9 @@ handoff = [390.062, -491.382, 431.861, -179.717, 1.903, -90.965]  # cartesian
 
 def main():
     """! Main program entry"""
+
+    client.loop_start()
+
     print("Cartesian values x:", cart_data["x"], " y:", cart_data["y"], " z:", cart_data["z"])
 
     # Create new robot object
