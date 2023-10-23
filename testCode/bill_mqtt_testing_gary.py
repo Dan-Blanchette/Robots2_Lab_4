@@ -18,7 +18,7 @@ import FANUCethernetipDriver
 
 # MQTT server details
 #BROKER_IP = "129.101.98.194"
-BROKER_IP = "129.101.132.217"
+BROKER_IP = "172.20.10.6"
 BROKER_PORT = 1883
 
 cart_data = {
@@ -54,9 +54,11 @@ def on_message(client, userdata, msg):
         print("Message received")
         print("Received payload:", msg.payload.decode())
         received_data = json.loads(msg.payload.decode())
-        cart_data['x'] = received_data.get('x', cart_data['x'])
-        cart_data['y'] = received_data.get('y', cart_data['y'])
-        cart_data['z'] = received_data.get('z', cart_data['z'])
+        # cart_data['x'] = received_data.get('x', cart_data['x'])
+        # cart_data['y'] = received_data.get('y', cart_data['y'])
+        # cart_data['z'] = received_data.get('z', cart_data['z'])
+
+        cart_data.update(received_data)
         print("FROM ON MESSAGE Cartesian values after Random x:", cart_data["x"], "(", type(cart_data["x"]), ")",
               " y:", cart_data["y"], "(", type(cart_data["y"]), ")",
               " z:", cart_data["z"], "(", type(cart_data["z"]), ")")
@@ -93,14 +95,6 @@ handoff = [390.062, -491.382, 431.861, -179.717, 1.903, -90.965]  # cartesian
 
 def main():
     """! Main program entry"""
-    print("Cartesian values after Random x:", cart_data["x"], "(", type(cart_data["x"]), ")",
-          " y:", cart_data["y"], "(", type(cart_data["y"]), ")",
-          " z:", cart_data["z"], "(", type(cart_data["z"]), ")")
-
-    print("Cartesian values after Random x:", cart_data["x"], "(", type(cart_data["x"]), ")",
-          " y:", cart_data["y"], "(", type(cart_data["y"]), ")",
-          " z:", cart_data["z"], "(", type(cart_data["z"]), ")")
-
     time.sleep(15)
     # copy handoff cartesian, apply new cart_data from DJ to it
     temp_handoff = handoff
@@ -110,9 +104,7 @@ def main():
     temp_handoff[2] += cart_data["z"]
 
     print("ROBOT STARTED")
-    print("Cartesian values after Random x:", cart_data["x"], "(", type(cart_data["x"]), ")",
-          " y:", cart_data["y"], "(", type(cart_data["y"]), ")",
-          " z:", cart_data["z"], "(", type(cart_data["z"]), ")")
+
 
     time.sleep(10)
     print("---------------------------------------------")
