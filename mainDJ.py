@@ -95,7 +95,7 @@ def main():
 # main program  
 
    home = [3.6055996417999268,-1.5429623126983643,3.3683128356933594,-0.713886559009552,-4.529087066650391,-2.439002752304077]
-   def_loc_grab = [13.7835693359375,23.362775802612305,-52.080665588378906,-1.1174789667129517,-39.579307556152344,16.08687400817871] 
+   def_loc_grab = [17.481, 25.178, -51.212, 0.697,-38.636, 13.036] 
    # cartesian moves
    # move flag variable
    move_flag = crx10_dj.is_moving()
@@ -143,59 +143,64 @@ def main():
    
    # Poll Bill to see if robot has dice
    while(1):
-      # Bill has the dice
-      if(flag_data["bill_has_die"] == True):
-        # DJ Opens gripper
-        crx10_dj.shunk_gripper("open")
-        # Reset DJ has dice flag to False
-        flag_data['dj_has_die'] = False
-        # Send Flag update to Gary's PC
-        message2 = json.dumps(flag_data)
-        client.publish("flag_data", message2, qos=1)
+   # Bill has the dice
+        if(flag_data["bill_has_die"] == True):
+            # DJ Opens gripper
+            crx10_dj.shunk_gripper("open")
+            # Reset DJ has dice flag to False
+            flag_data['dj_has_die'] = False
+            # Send Flag update to Gary's PC
+            message2 = json.dumps(flag_data)
+            client.publish("flag_data", message2, qos=1)
 
-        #if DJ has dice is false, ok to -500mm y-axis retract
-        if(flag_data["dj_has_die"]== False):
-           print("Retracting.........")
-           crx10_dj.write_cartesian_position(364.646, 190.701, 376.777, -90.995, -31.562, -1.412)
-           crx10_dj.start_robot()
-        break
-      else:
-        # debug statements
-        print("waiting for Bill to grab")
-        print(f'Bill Status:{flag_data["bill_has_die"]}')
-        time.sleep(3)
+            #if DJ has dice is false, ok to -500mm y-axis retract
+            if(flag_data["dj_has_die"]== False):
+                print("Retracting.........")
+                crx10_dj.write_cartesian_position(364.646, 190.701, 376.777, -90.995, -31.562, -1.412)
+                crx10_dj.start_robot()
+                time.sleep(0.5)
+                break
+        else:
+            # debug statements
+            print("waiting for Bill to grab")
+            print(f'Bill Status:{flag_data["bill_has_die"]}')
+            time.sleep(3)
 
    # Poll to see if Bill has die and Bill is waiting
 
    while(1):
 
-      if(flag_data["bill_has_die"] == True and flag_data["bill_waiting"] == True):
-         crx10_dj.write_cartesian_position(def_cart_data["x"] + cart_data["x"], def_cart_data["y"] + cart_data["y"], def_cart_data["z"] + cart_data["z"])
-         crx10_dj.start_robot()
-
-         crx10_dj.shunk_gripper('close')
-         flag_data["dj_has_die"] = True
-         #update gripper flag is closed
-         message3 = json.dumps(flag_data)
-         client.publish("flag_data", message3, qos=1)
-
-         # wait for false flag from bill's gripper
-         if (flag_data["bill_has_die"] == False):
-            crx10_dj.write_joint_pose(def_loc_grab)
+        if(flag_data["bill_has_die"] == True and flag_data["bill_waiting"] == True):
+            # move y+ 10mm to grab dice
+            crx10_dj.write_cartesian_position(def_cart_data["x"] + cart_data["x"], def_cart_data["y"] + cart_data["y"] + 10, def_cart_data["z"] + cart_data["z"])
             crx10_dj.start_robot()
 
+            crx10_dj.shunk_gripper('close')
+            flag_data["dj_has_die"] = True
+            #update gripper flag is closed
+            message3 = json.dumps(flag_data)
+            client.publish("flag_data", message3, qos=1)
+            break
+
+
+        else:
+            print("Waiting for Bill to let go")
+            print(f'Bill Dice Status:{flag_data["bill_has_die"]}')
+            print(f'Bill Waiting Status:{flag_data["bill_waiting"]}')
+            time.sleep(3)
+    
+    # wait for false flag from bill's gripper   
+   while(1):
+       print(f'Bill has die == {flag_data["bill_has_die"]}')
+       if (flag_data["bill_has_die"] == False):
+            # ok to move to default pick up/drop off position
+            crx10_dj.write_joint_pose(def_loc_grab)
+            crx10_dj.start_robot()
+            
             crx10_dj.shunk_gripper('open')
             crx10_dj.write_joint_pose(home)
             crx10_dj.start_robot()
             break
-      else:
-         print("Waiting for Bill to let go")
-         print(f'Bill Status:{flag_data["bill_has_die"]}')
-         print(f'Bill Status:{flag_data["bill_waiting"]}')
-         time.sleep(3)
-
-
-
 
 if __name__=="__main__":
     main()  
