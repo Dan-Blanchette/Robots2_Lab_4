@@ -7,12 +7,19 @@ import time
 BROKER_IP = "129.101.98.194"
 BROKER_PORT = 1883
 
-data = {
+cart_data = {
     "x": 1.23,
     "y": 4.56,
-    "z": 7.89,
-    "robot_moving": True 
+    "z": 7.89
 }   
+
+
+
+print(f'x_position: {cart_data["x"]}')
+
+DJ_move_flag = {
+    "robot_moving": False 
+}
 
 
 def on_publish(client, userdata, mid):
@@ -25,13 +32,15 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     data = json.loads(msg.payload.decode())
-    x = data["x"]
-    y = data["y"]
-    z = data["z"]
-    robot_move = data["robot_moving"]
+    x = cart_data["x"]
+    y = cart_data["y"]
+    z = cart_data["z"]
+    robot_move = DJ_move_flag["robot_moving"]
     print(f'x:{x}, y:{y}, z:{z}, robot_moving:{robot_move}')
     # print(f"Topic: {msg.topic}\nMessage: {msg.payload.decode()}")
 
+cart_data["x"] = 100.0
+print(f'new x: {cart_data["x"]}')
 client = mqtt.Client()
 client.on_publish = on_publish
 client.on_message = on_message
@@ -39,7 +48,7 @@ client.on_connect = on_connect
 client.connect(BROKER_IP, BROKER_PORT)
 client.loop_start()
 
-message = json.dumps(data)
+message = json.dumps(cart_data)
 
 while(1):
    client.publish("ROBOT_A_DJ", message, qos=1)
