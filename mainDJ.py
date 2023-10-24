@@ -22,9 +22,9 @@ def_cart_data = {
 }
 
 cart_data = {
-    "x": "0.0",
-    "y": "0.0",
-    "z": "0.0"
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
 }
 
 flag_data = {
@@ -53,6 +53,7 @@ def on_publish(client, userdata, mid):
 #    crx10_dj.write_cartesian_position(def_cart_data["x"],def_cart_data["y"],def_cart_data["z"],
 #                                      def_cart_data["w"],def_cart_data["p"],def_cart_data["r"])
 #    crx10_dj.start_robot()
+
    
 
 def on_connect(client, userdata, flags, rc):
@@ -114,47 +115,45 @@ def main():
    crx10_dj.shunk_gripper('close')
    flag_data["dj_has_die"] = True
    message = json.dumps(flag_data)
+   # publish grab flag as true and send to Gary's lappy
    client.publish("flag_data", message, qos=1)
    print(f'I just sent Gary This Value:{message}')
    
-
-
-   # crx10_dj.write_joint_pose(handoff)
-   # crx10_dj.write_cartesian_position(default_cart_data["x"], default_cart_data["y"], default_cart_data["z"], 
-   #                                   default_cart_data["w"], default_cart_data["p"], default_cart_data["r"])
-
-   cart_data["x"] = str(random.uniform(-50.0, 50.0))
+# Applying random offset to dictionary
+   cart_data["x"] = random.uniform(-50.0, 50.0)
    print(f'x_off: {cart_data["x"]}')
-   cart_data["y"] = str(random.uniform(-50.0, 50.0))
+   cart_data["y"] = random.uniform(-50.0, 50.0)
    print(f'y_off: {cart_data["y"]}')
-   cart_data["z"] = str(random.uniform(-90.0, 90.0))
+   cart_data["z"] = random.uniform(-90.0, 90.0)
    print(f'z_off: {cart_data["z"]}')
+   # Sends offset data to Gary
    message2 = json.dumps(cart_data)
-   client.publish("cart_offset", message2, qos=2)
+   client.publish("cart_data", message2, qos=2)
    
-   print(f'I just sent Gary {message2}')
 
-   crx10_dj.write_cartesian_position(def_cart_data["x"], def_cart_data["y"], def_cart_data["z"],
+   crx10_dj.write_cartesian_position(def_cart_data["x"] + cart_data["x"], def_cart_data["y"] + cart_data["y"], def_cart_data["z"] + cart_data["z"],
                                      def_cart_data["w"], def_cart_data["p"], def_cart_data["r"])
    crx10_dj.start_robot()
 
 
-   move_flag = crx10_dj.is_moving()
-   crx10_dj.start_robot()
-   print(f'Flag Value: {move_flag}')
    flag_data["dj_waiting"] = True
    message1 = json.dumps(flag_data)
-   print("I'm waiting..............................")
+   print("DJ is waiting to hand off")
    client.publish("flag_data", message1, qos=1)
-   print("end of prog")
    
+   # Poll Bill to see if robot has dice
    while(1):
+      # Bill has the dice
       if(flag_data["bill_has_die"] == True):
+        # DJ Opens gripper
         crx10_dj.shunk_gripper("open")
+        # Reset DJ has dice flag to False
         flag_data['dj_has_die'] = False
+        # Send Flag update to Gary's PC
         message2 = json.dumps(flag_data)
         client.publish("flag_data", message2, qos=1)
-        # -20mm y-axis retract
+
+        #if DJ has dice is false, ok to -500mm y-axis retract
         if(flag_data["dj_has_die"]== False):
            print("Retracting.........")
            crx10_dj.write_cartesian_position(364.646, 190.701, 376.777, -90.995, -31.562, -1.412)
@@ -166,7 +165,34 @@ def main():
         print(f'Bill Status:{flag_data["bill_has_die"]}')
         time.sleep(3)
 
-        
+   # Poll to see if Bill has die and Bill is waiting
+
+   while(1):
+
+      if(flag_data["bill_has_die"] == True and flag_data["bill_waiting"] == True):
+         crx10_dj.write_cartesian_position(def_cart_data["x"] + cart_data["x"], def_cart_data["y"] + cart_data["y"], def_cart_data["z"] + cart_data["z"])
+         crx10_dj.start_robot()
+
+         crx10_dj.shunk_gripper('close')
+         flag_data["dj_has_die"] = True
+         #update gripper flag is closed
+         message3 = json.dumps(flag_data)
+         client.publish("flag_data", message3, qos=1)
+
+         # wait for false flag from bill's gripper
+         if (flag_data["bill_has_die"] == False):
+            crx10_dj.write_joint_pose(def_loc_grab)
+            crx10_dj.start_robot()
+
+            crx10_dj.shunk_gripper('open')
+            crx10_dj.write_joint_pose(home)
+            crx10_dj.start_robot()
+            break
+      else:
+         print("Waiting for Bill to let go")
+         print(f'Bill Status:{flag_data["bill_has_die"]}')
+         print(f'Bill Status:{flag_data["bill_waiting"]}')
+         time.sleep(3)
 
 
 
