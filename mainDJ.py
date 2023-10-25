@@ -11,8 +11,6 @@
 # broker. # This program utilizes the University of Idaho Fanuc Python API driver, Paho MQTT, and Mosquitto
 # acting as a local broker on Gary's laptop. 
 
-
-import os
 import random
 from robot_controller import robot
 import paho.mqtt.client as mqtt
